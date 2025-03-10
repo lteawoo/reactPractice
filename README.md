@@ -132,3 +132,71 @@ function App() {
 * html을 그냥 가져다 jsx에 붙히면 안되는 경우가 많다.
 * 제약조건이 html보다 많기 때문
 * https://transform.tools/html-to-jsx 변환기를 쓰면 보다 간편하게 사용 가능
+
+## JSX 활용
+### 따옴표로 문자열 전달
+JSX에 문자열 속성은 작은따옴표나 큰따옴표로 묶는다.
+```javascript
+export default function Avatar() {
+  return (
+    <img
+      className="avatar"
+      src="/sample.png"
+      alt="sample"
+    />
+  );
+}
+```
+* 해당 예제에서는 `"/sample.png"` 및 `"sample"`이 문자열로 전달된다.
+* 동적으로 전달 시에는 `{}`로 묶으면 된다.
+```javascript
+export default function Avatar() {
+  const src = '/sample.png'
+  const desc = 'sample'
+  return (
+    <img
+      className="avatar"
+      src={src}
+      alt={desc}
+    />
+  );
+}
+```
+
+### javascript 전달
+```javascript
+const today = new Date();
+
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat(
+    'en-US',
+    { weekday: 'long' }
+  ).format(date);
+}
+
+export default function Page() {
+  return (
+    <h1>Today Is {formatDate(today)}</h1>
+  );
+}
+```
+* 중괄호 안에 javascript 표현식을 사용 가능하다
+
+### css 및 기타 객체 전달
+```javascript
+export default function Page() {
+  return (
+    <ul style={{
+      backgroundColor: 'black',
+      color: 'pink'
+    }}>
+      <li>Improve the videophone</li>
+      <li>Prepare aeronautics lectures</li>
+      <li>Work on the alcohol-fuelled engine</li>
+    </ul>
+  );
+}
+```
+* 중괄호를 2개 중첩하여 사용하여 객체 및 css 등을 전달할 수 있다
+* css의 경우 인라인 스타일을 사용할 수 있지만 대부분의 경우 클래스로 적용한다
+* css 인라인 스타일의 경우 camelCase로 작성해야하는 점 주의
