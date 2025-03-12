@@ -200,3 +200,213 @@ export default function Page() {
 * 중괄호를 2개 중첩하여 사용하여 객체 및 css 등을 전달할 수 있다
 * css의 경우 인라인 스타일을 사용할 수 있지만 대부분의 경우 클래스로 적용한다
 * css 인라인 스타일의 경우 camelCase로 작성해야하는 점 주의
+
+## Props 전달하기
+React 컴포넌트는 props를 사용하여 통신
+### 자식 컴포넌트에 props 전달
+```javascript
+export default function Page() {
+  return (
+    <div>
+      <p>Hello child component</p>
+      <MyButton
+        text={"hello props"}
+        style={{ bgColor: "#d3d3d3", size: "50px" }}
+      />
+    </div>
+  );
+}
+```
+MyButton 컴포넌트에 text와 style을 전달, text는 string, style은 object
+```javascript
+export default function MyButton({
+  text="hello default",
+  style={ bgColor: "yellow", size: "50px"}
+}: {
+  text: string
+  style: { bgColor: string, size: string }
+}) {
+  return (
+    <button style={{ backgroundColor: style.bgColor, width: style.size }}>{text}</button>
+  )
+}
+```
+Mybutton은 위와 같이 props를 선언할때 구조 분해 할당을 할 수 있음
+```javascript
+export default function MyButton(props) {
+  let text = props.text
+  let style = props.style
+
+  return (
+    <button style={{ backgroundColor: style.bgColor, width: style.size }}>{text}</button>
+  )
+}
+```
+너무 많은 props의 경우 `spread` 구문을 통해 합리적으로 전달 가능
+```javascript
+function Profile(props) {
+  return (
+    <div className="card">
+      <Avatar {...props} />
+    </div>
+  );
+}
+```
+
+## 이벤트
+### 이벤트 정의
+```javascript
+export default function Button() {
+  function handleClick() {
+    alert('clicked')
+  }
+
+  return (
+    <button onClick={handleClick}>
+      click me
+    </button>
+  )
+}
+```
+* button에 handleClick을 prop으로 전달
+* 일반적으로 handle로 시작하고 뒤에 이벤트 이름이 붙음 `handleClick` `handleMouseEnter`
+
+```javascript
+export default function Button1() {
+  return (
+    <button onClick={() => {
+      alert('clicked')
+    }}>
+      click me2
+    </button>
+  )
+}
+```
+* arrow function도 가능하다
+
+### 이벤트의 전달
+```javascript
+export default function Button1() {
+  return (
+    <button onClick={() => {
+      alert('clicked')
+    }}>
+      click me2
+    </button>
+  )
+}
+
+export default function CustomButton({ text } : { text: string}) {
+
+  function handleSampleClick() {
+    alert('custom!')
+  }
+  return (
+    <Button onClick={handleSampleClick}>
+      Sample &quot;{text}&quot; Click!
+    </Button>
+  )
+}
+
+export default function Page() {
+  return (
+    <div>
+      <CustomButton text={"1234"}/>
+    </div>
+  );
+}
+```
+
+## 상태
+* 컴포넌트의 메모리라고 생각하면 됨
+* 상태는 컴포넌트에 닫혀있음, 선언한 컴포넌트에 독립적이고, 부모컴포넌트에서 변경할 수 없음
+* 만약 부모의 자식 컴포넌트 2개가 상태를 공유하고 싶으면, 상태를 자식에 두지 않고 부모에 두고 공유하는게 방법
+```javascript
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  let index = 0;
+
+  function handleClick() {
+    index = index + 1;
+  }
+
+  let sculpture = sculptureList[index];
+  return (
+    <>
+      <button onClick={handleClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i>
+        by {sculpture.artist}
+      </h2>
+      <h3>
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <img
+        src={sculpture.url}
+        alt={sculpture.alt}
+      />
+      <p>
+        {sculpture.description}
+      </p>
+    </>
+  );
+}
+```
+* button을 누르면 index가 증가하고 다음 내용을 표시해야하지만 동작하지 않는다.
+* 로컬 변수는 렌더링 간에 지속되지 않음
+* 로컬 변수의 변경은 렌더링을 트리거하지 않음
+* 이를 위해 렌더링 간에 데이터를 유지해야한다
+* 또한 새로운 데이터로 재렌더링 하도록 트리거 해야한다.
+### useState
+Hook인 `useState`는 다음과 같은 역할을 한다
+* 렌더링 간에 데이터를 유지하기 위한 상태 변수
+* 변수를 업데이트하고, React가 컴포넌트를 다시 렌더링하도록 트리거함
+```javascript
+'use client'
+import { sculptureList } from './data'
+import { useState } from 'react'
+
+export default function Gallery() {
+  // let index = 0;
+  const [index, setIndex] = useState(0); // array 구조분해 let index = useState(0)[0]...
+
+  function handleClick() {
+    // index = index + 1;
+    setIndex(index + 1)
+  }
+
+  const sculpture = sculptureList[index];
+  return (
+    <>
+      <button onClick={handleClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i>
+        by {sculpture.artist}
+      </h2>
+      <h3>
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <img
+        src={sculpture.url}
+        alt={sculpture.alt}
+      />
+      <p>
+        {sculpture.description}
+      </p>
+    </>
+  );
+}
+```
+* `useState` hook은 초기값을 파라미터로 받음
+* 컴포넌트 렌더링 시 `useState`는 2개의 값이 포함된 배열을 반환함
+  1. 값을 저장한 상태 변수
+  2. 상태 변수를 업데이트하고, React를 트리거하는 setter 함수
+* `useState`은 실제 다음과 같은 순서로 진행됨
+  1. 컴포넌트가 처음 렌더링됨 - `useState`에 0으로 초기화 했으므로 `[0, setIndex]`가 반한되고, React는 0을 기억한다.
+  2. 상태를 업데이트함(버튼클릭) - 버튼 클릭시 `setIndex(index + 1)`을 호출 함, `index`가 현재 0이므로 `setIndex(1)`임 그러므로 React는 1을 기억함, 그리고 렌더링을 트리거함
+  3. 컴포넌트가 두번째 렌더링을 함 - `setIndex(1)`을 하였으므로, `[1, setIndex]`가 반한되며 렌더링이된걸 확인할 수 있음
