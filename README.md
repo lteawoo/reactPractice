@@ -410,3 +410,204 @@ export default function Gallery() {
   1. 컴포넌트가 처음 렌더링됨 - `useState`에 0으로 초기화 했으므로 `[0, setIndex]`가 반한되고, React는 0을 기억한다.
   2. 상태를 업데이트함(버튼클릭) - 버튼 클릭시 `setIndex(index + 1)`을 호출 함, `index`가 현재 0이므로 `setIndex(1)`임 그러므로 React는 1을 기억함, 그리고 렌더링을 트리거함
   3. 컴포넌트가 두번째 렌더링을 함 - `setIndex(1)`을 하였으므로, `[1, setIndex]`가 반한되며 렌더링이된걸 확인할 수 있음
+
+# Next.js
+### Next.js 란
+풀스택 웹프레임워크를 만들기 위한 React 프레임워크 React Components를 사용하여 UI를 빌드하고 Next.js를 사용하여 추가 기능과 최적화를 구현
+
+### 특징
+* 번들링, 컴파일, 라우트 같은 React에 필요한 도구들을 추상화하고 자동으로 구성
+* 구성에 시간 소요을 줄이고, 구현에 집중할 수 있음
+* 서버 사이드 렌더링(SSR), 정적 사이트 생성(SSG), API 라우팅, 파일 기반 라우팅, 이미지 최적화, SEO 등을 손쉽게 할 수 있음
+
+## 설치
+`npx create-next-app@latest`를 사용하여 구현하는 걸 추천
+```
+What is your project named? my-app
+Would you like to use TypeScript? No / Yes
+Would you like to use ESLint? No / Yes
+Would you like to use Tailwind CSS? No / Yes
+Would you like your code inside a `src/` directory? No / Yes
+Would you like to use App Router? (recommended) No / Yes
+Would you like to use Turbopack for `next dev`?  No / Yes
+Would you like to customize the import alias (`@/*` by default)? No / Yes
+What import alias would you like configured? @/*
+```
+프롬프트가 표시되면 입력한 프로젝트 이름으로 폴더가 생성되고 자동 구성됨
+
+## 구조
+* app: 앱 라우터(과거 /pages)
+* public: 정적 자원
+* src: 선택적 애플리케이션 소스 폴더
+  * src 사용 시 root에 app, pages를 두는 대신 src 아래에 둠
+  * components 와 같은 구성 폴더도 이동하는게 좋음
+
+## Route
+기본적으로 src/app 또는 app 아래에 파일을 만들면 URL이 된다
+```
+pages/
+├── index.tsx       → /
+├── about.tsx       → /about
+├── contact.tsx     → /contact
+```
+### 동적 라우팅(Dynamic Routes)
+파일명에 대괄호`[]`를 사용하면 동적 파라미터를 경로에 사용 가능
+```
+pages/
+├── blog/
+│   └── [id].tsx     → /blog/1, /blog/abc 등
+```
+`useRouter` hook으로 파라미터를 읽을 수 있음
+```javascript
+import { useRouter } from 'next/router';
+
+export default function BlogPost() {
+  const router = useRouter();
+  const { id } = router.query;
+
+  return <div>Post ID: {id}</div>;
+}
+```
+
+### 중첩 라우팅(Nested Routes)
+디렉토리를 중첩하면 자동으로 URL도 중첩됨
+```
+pages/
+└── dashboard/
+    ├── index.tsx     → /dashboard
+    └── settings.tsx  → /dashboard/settings
+```
+
+### 새로운 App기반 라우팅
+* next.js 13부터 도입됨
+* 서버 컴포넌트, 레이아웃, 로딩 상태, 에러페이지 구현이 쉬워졌음
+* /app으로 구성하는 것을 추천함
+```javascript
+app/
+├── layout.tsx       → 모든 페이지 공통 레이아웃
+├── page.tsx         → /
+├── about/
+│   └── page.tsx     → /about
+├── blog/
+│   ├── [id]/
+│   │   └── page.tsx → /blog/1
+│   └── layout.tsx   → /blog/* 레이아웃
+```
+
+### 페이지 이동
+* React에서는 `a`태그로 이동하면 페이지 전체가 새로고침
+* Next.js에서는 `next/link`를 사용하며 클라이언트 사이드 이동이 가능
+```javascript
+import Link from 'next/link';
+
+export default function Home() {
+  return <Link href="/about">About 페이지로 이동</Link>;
+}
+```
+
+## 렌더링 전략
+![alt text](image.png)
+
+### SSR
+* 요청이 올 때마다 서버에서 HTML을 생성하여 전달
+* 항상 최신데이터를 보여줘야 할 때 유리
+* Next.js 13이상에서는 기본적으로 page.tsx는 서버 렌더링
+```javascript
+type Data = {
+  title?: string
+  content?: string
+}
+
+export default async function SsrPage() {
+  let data: Data = {}
+  try {
+    const res = await fetch('http://localhost:3000/data.txt')
+    data = await res.json()
+  } catch (error) {
+    console.error('Failed to fetch data for SSG:', error);
+    // 선택적으로 fallback data 반환 가능
+    data = {
+      title: 'fallback data',
+      content: 'fallback'
+    } satisfies Data
+  }
+
+  return (
+    <div>
+      hello
+      <p>title: {data.title}</p>
+      <p>content: {data.content}</p>
+    </div>
+  )
+}
+```
+
+### SSG
+* 빌드할 때 정적페이지 생성(`next build`)
+* CDN에서 캐시해서 사용 가능
+* revalidate 옵션으로 ISR(Incremental Static Regeneration) 가능
+```javascript
+type Data = {
+  title?: string
+  content?: string
+}
+
+export default async function SsrPage() {
+  let data: Data = {}
+  try {
+    const res = await fetch('http://localhost:3000/data.txt')
+    data = await res.json()
+  } catch (error) {
+    console.error('Failed to fetch data for SSG:', error);
+    // 선택적으로 fallback data 반환 가능
+    data = {
+      title: 'fallback data',
+      content: 'fallback'
+    } satisfies Data
+  }
+
+  return (
+    <div>
+      hello
+      <p>title: {data.title}</p>
+      <p>content: {data.content}</p>
+    </div>
+  )
+}
+```
+* build 타임엔 localhost 서버 가 없으니 fallback data 리턴
+* 결과적으로 빌드된 데이터는 fallback data
+
+### CSR
+* 클라이언트가 데이터를 가져오고 렌더링
+* HTML을 미리 만들지 않음
+* useEffect로 fetch 이후 동적으로 만들어짐
+
+```javascript
+"use client"
+
+import { useEffect, useState } from "react"
+
+type Data = {
+  title?: string
+  content?: string
+}
+
+export default function Page() {
+const [data, setData] = useState<Data>({})
+
+  useEffect(() => {
+    fetch('/data.txt')
+      .then((res) => res.json())
+      .then(setData)
+  }, [])
+
+  return (
+    <div>
+      hello
+      <p>title: {data.title}</p>
+      <p>content: {data.content}</p>
+    </div>
+  )
+}
+```

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Page() {
   return (
     <div>
@@ -9,7 +11,7 @@ export default function Page() {
       <a href="/event1">event1</a><br/>
       <a href="/event2">event2</a><br/>
       <a href="/state1">state1</a><br/>
-      <a href="/state2">state2</a><br/>
+      <Link href="/state2">state2</Link>
     </div>
   )
 }
