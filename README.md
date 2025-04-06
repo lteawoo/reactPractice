@@ -611,3 +611,104 @@ const [data, setData] = useState<Data>({})
   )
 }
 ```
+## 데이터 패칭
+1. 서버 컴포넌트
+    * 페이지나 서버 컴포넌트 내부에서 fetch()
+    * ssr/ssg/isr 가능
+2. 클라이언트 컴포넌트
+    * useEffect()로 클라이언트 fetch (csr)
+3. API 라우트 호출
+    * /api/... 경로를 통해 분리된 서버 로직 호출
+    * 벡엔드 격리
+
+```javascript
+// /api/docs
+export async function GET() {
+  return Response.json([
+    {
+      id: 1,
+      title: `doc2`,
+      content: "hello world1"
+    },
+    {
+      id: 2,
+      title: `doc2`,
+      content: "hello world2"
+    }
+  ])
+}
+
+// /src/app/next/call-api/page.tsx
+type Doc = {
+  id: number | string
+  title?: string
+  content?: string
+}
+
+export default async function Page() {
+  let docs
+  try {
+    const res = await fetch('http://localhost:3000/api/docs')
+    docs = await res.json()
+  } catch {
+    docs = [{
+      id: 1,
+      title: "fallback",
+      content: "fallback content"
+    }]
+  }
+
+  return (
+    <div>
+      {docs.map((d: Doc) => (
+        <p key={d.id}>{d.title}: {d.content}</p>
+      ))}
+    </div>
+  )
+}
+```
+
+## API Route
+* 기본적인 경로는 app/api/.../route.ts 형태
+* 각 HTTP 메서드에 대해 GET, POST, PUT, DELETE등의 함수를 export 하면 된다
+
+```javascript
+export async function GET() {
+  return Response.json([
+    {
+      id: 1,
+      title: `doc2`,
+      content: "hello world1"
+    },
+    {
+      id: 2,
+      title: `doc2`,
+      content: "hello world2"
+    }
+  ])
+}
+
+GET /api/hello
+-> { "message": "Hello, API!" }
+```
+
+### HTTP Methods
+```javascript
+
+```
+
+### 동적 라우팅
+```javascript
+// app/api/docs/[id]/route.ts
+import { NextRequest } from "next/server";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string }}) {
+  return Response.json({
+    id: params.id,
+    title: `doc${params.id}`,
+    content: `hello world${params.id}`
+  })
+}
+```
