@@ -694,7 +694,31 @@ GET /api/hello
 
 ### HTTP Methods
 ```javascript
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  return Response.json({ message: `GET item ${params.id}` });
+}
 
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const body = await req.json();
+  return Response.json({ message: `Updated ${params.id}`, data: body });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  return Response.json({ message: `Deleted ${params.id}` });
+}
+```
+
+### Header
+```javascript
+export async function GET(req: NextRequest) {
+  const token = req.headers.get('authorization');
+
+  if (!token || token !== 'Bearer secret') {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  return Response.json({ ok: true });
+}
 ```
 
 ### 동적 라우팅
